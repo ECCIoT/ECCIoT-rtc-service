@@ -1,13 +1,23 @@
 package org.ecciot;
 
+import org.apache.log4j.BasicConfigurator;
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 /**
  * Hello world!
  *
  */
 public class App 
 {
+    //日志记录器
+    private static Logger LOGGER = LogManager.getLogger(App.class);
+
     public static void main( String[] args )
     {
-        System.out.println( "Hello World!!" );
+        //自动快速地使用缺省Log4j环境
+        BasicConfigurator.configure();
+
+        LOGGER.info("ECCIoT RTC service has started.");
     }
 }
