@@ -9,5 +9,8 @@
         <module name="ecciot-service-rtc" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="ECCIoT-args-lib" target="1.5" />
+    </bytecodeTargetLevel>
   </component>
 </project>

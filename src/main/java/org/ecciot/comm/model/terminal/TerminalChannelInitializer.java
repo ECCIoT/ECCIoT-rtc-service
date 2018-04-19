@@ -13,7 +13,7 @@ public class TerminalChannelInitializer extends  ChannelInitializer<SocketChanne
         ChannelPipeline pipeline = arg0.pipeline();
         pipeline.addLast("docode",new StringDecoder());
         pipeline.addLast("encode",new StringEncoder());
-        pipeline.addLast("device",new TerminalChannelHandler());
+        pipeline.addLast("terminal",new TerminalChannelHandler());
 
     }
 
