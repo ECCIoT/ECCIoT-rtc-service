@@ -1,4 +1,4 @@
-package org.ecciot.comm.model;
+package org.ecciot.manager;
 
 import io.netty.channel.Channel;
 import io.netty.channel.group.ChannelGroup;

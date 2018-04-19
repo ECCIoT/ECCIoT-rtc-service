@@ -13,7 +13,7 @@ public class ServerChannelInitializer extends  ChannelInitializer<SocketChannel>
         ChannelPipeline pipeline = arg0.pipeline();
         pipeline.addLast("docode",new StringDecoder());
         pipeline.addLast("encode",new StringEncoder());
-        pipeline.addLast("device",new ServerChannelHandler());
+        pipeline.addLast("server",new ServerChannelHandler());
 
     }
 

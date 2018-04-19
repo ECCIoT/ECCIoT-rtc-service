@@ -1,6 +1,4 @@
-package org.ecciot.comm;
-
-import org.ecciot.comm.model.ApplicationModel;
+package org.ecciot.manager;
 
 import java.util.HashMap;
 

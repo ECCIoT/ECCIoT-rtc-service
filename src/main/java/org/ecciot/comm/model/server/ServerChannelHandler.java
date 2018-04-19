@@ -9,6 +9,13 @@ import io.netty.util.concurrent.GlobalEventExecutor;
 
 public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 
+    /*
+     *   思路：当服务端的通信接入时，首先验证身份，再判断应用管理器中是否已有来自相同应用API的服务通信
+     */
+
+    private String api_key = null;
+
+
     public static final ChannelGroup group = new DefaultChannelGroup(
             GlobalEventExecutor.INSTANCE);
 
@@ -28,9 +35,12 @@ public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 
     }
 
+
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
+
         Channel channel = ctx.channel();
+
         for (Channel ch : group) {
             ch.writeAndFlush(
                     "[" + channel.remoteAddress() + "] " + "is comming");
