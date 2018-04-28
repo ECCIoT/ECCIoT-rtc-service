@@ -19,6 +19,11 @@ public class ApplicationsManager {
 
     private ApplicationsManager(){}
 
+    //API_KEY,ApplicationGroup
     private HashMap<String,ApplicationGroup> hmApplication;
+    
+    public HashMap<String, ApplicationGroup> getHmApplication() {
+		return hmApplication;
+	}
 
 }

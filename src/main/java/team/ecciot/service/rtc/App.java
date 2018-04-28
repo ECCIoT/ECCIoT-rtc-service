@@ -14,6 +14,8 @@ public class App
         //自动快速地使用缺省Log4j环境
         BasicConfigurator.configure();
 
+        
+        
         LOGGER.info("ECCIoT RTC service has started.");
     }
 }

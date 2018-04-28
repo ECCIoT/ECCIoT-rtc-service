@@ -1,4 +1,4 @@
-package team.ecciot.service.rtc.comm.model.terminal;
+package team.ecciot.service.rtc.comm.listener;
 
 
 import io.netty.bootstrap.ServerBootstrap;
@@ -7,19 +7,25 @@ import io.netty.channel.ChannelOption;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import team.ecciot.service.rtc.comm.initializer.ServerChannelInitializer;
+
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-public class TerminalListener {
+public class ServerListener {
 
     //日志记录器
-    private static Logger LOGGER = LogManager.getLogger(TerminalListener.class);
+    private static Logger LOGGER = LogManager.getLogger(ServerListener.class);
 
     private int port;
 
-    public TerminalListener(int port) {
+    public ServerListener(int port) {
         this.port = port;
     }
+
+//    public static void main(String[] args) {
+//        new DeviceListener(Integer.parseInt(args[0])).run();
+//    }
 
     public void run() {
         EventLoopGroup acceptor = new NioEventLoopGroup();
@@ -28,10 +34,10 @@ public class TerminalListener {
         bootstrap.option(ChannelOption.SO_BACKLOG, 1024);
         bootstrap.group(acceptor, worker);
         bootstrap.channel(NioServerSocketChannel.class);
-        bootstrap.childHandler(new TerminalChannelInitializer());
+        bootstrap.childHandler(new ServerChannelInitializer());
         try {
             Channel channel = bootstrap.bind(port).sync().channel();
-            LOGGER.info("TerminalListener strart running in port:" + port);
+            LOGGER.info("ServerListener strart running in port:" + port);
             channel.closeFuture().sync();
         } catch (InterruptedException e) {
             e.printStackTrace();

@@ -1,4 +1,4 @@
-package team.ecciot.service.rtc.comm.model.device;
+package team.ecciot.service.rtc.comm.handler;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
@@ -7,7 +7,7 @@ import io.netty.channel.group.ChannelGroup;
 import io.netty.channel.group.DefaultChannelGroup;
 import io.netty.util.concurrent.GlobalEventExecutor;
 
-public class DeviceChannelHandler extends SimpleChannelInboundHandler<String> {
+public class TerminalChannelHandler extends SimpleChannelInboundHandler<String> {
 
     public static final ChannelGroup group = new DefaultChannelGroup(
             GlobalEventExecutor.INSTANCE);
@@ -25,7 +25,6 @@ public class DeviceChannelHandler extends SimpleChannelInboundHandler<String> {
                         "[" + channel.remoteAddress() + "]: " + arg1 + "\n");
             }
         }
-
     }
 
     @Override

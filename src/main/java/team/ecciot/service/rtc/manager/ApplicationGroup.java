@@ -10,8 +10,8 @@ public class ApplicationGroup {
     private final String API_KEY;
 
     private Channel serverChannel;
-	private ChannelGroup deviceChannelGroup;      // = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
-    private ChannelGroup terminalChannelGroup;    // = new DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
+	private ChannelGroup deviceChannelGroup;
+    private ChannelGroup terminalChannelGroup;
 
     public ApplicationGroup(String api_key){
         API_KEY = api_key;
@@ -23,6 +23,10 @@ public class ApplicationGroup {
     
     public Channel getServerChannel() {
 		return serverChannel;
+	}
+    
+    public void setServerChannel(Channel serverChannel) {
+		this.serverChannel = serverChannel;
 	}
 
 	public ChannelGroup getDeviceChannelGroup() {
