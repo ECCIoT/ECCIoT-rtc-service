@@ -1,40 +1,82 @@
 package team.ecciot.service.rtc.manager;
 
+import java.util.LinkedList;
+
 import io.netty.channel.Channel;
-import io.netty.channel.group.ChannelGroup;
-import io.netty.channel.group.DefaultChannelGroup;
-import io.netty.util.concurrent.GlobalEventExecutor;
+import team.ecciot.service.rtc.comm.channel.BaseChannelBox;
+import team.ecciot.service.rtc.comm.channel.DeviceChannelBox;
+import team.ecciot.service.rtc.comm.channel.ServerChannelBox;
+import team.ecciot.service.rtc.comm.channel.TerminalChannelBox;
 
 public class ApplicationGroup {
 
-    private final String API_KEY;
+    private final String api_key;
 
-    private Channel serverChannel;
-	private ChannelGroup deviceChannelGroup;
-    private ChannelGroup terminalChannelGroup;
+    private ServerChannelBox serverChannelBox;
+	private LinkedList<DeviceChannelBox> deviceChannelList;
+    private LinkedList<TerminalChannelBox> terminalChannelList;
 
     public ApplicationGroup(String api_key){
-        API_KEY = api_key;
+        this.api_key = api_key;
     }
 
     public String getApiKey() {
-        return API_KEY;
+        return api_key;
     }
     
-    public Channel getServerChannel() {
-		return serverChannel;
+    public BaseChannelBox getServerChannel() {
+		return serverChannelBox;
 	}
     
-    public void setServerChannel(Channel serverChannel) {
-		this.serverChannel = serverChannel;
+    public ServerChannelBox getServerChannelBox() {
+		return serverChannelBox;
+	}
+    
+    public void setServerChannel(ServerChannelBox channelBox) {
+    	synchronized (this) {
+    		this.serverChannelBox = channelBox;
+    	}
 	}
 
-	public ChannelGroup getDeviceChannelGroup() {
-		return deviceChannelGroup==null?(deviceChannelGroup=new DefaultChannelGroup(GlobalEventExecutor.INSTANCE)):deviceChannelGroup;
+	public LinkedList<DeviceChannelBox> getDeviceChannelList() {
+		synchronized (this) {
+			return deviceChannelList==null?(deviceChannelList=new LinkedList<DeviceChannelBox>()):deviceChannelList;
+		}
+	}
+	
+	public LinkedList<TerminalChannelBox> getTerminalChannelList() {
+		synchronized (this) {
+			return terminalChannelList==null?(terminalChannelList=new LinkedList<TerminalChannelBox>()):terminalChannelList;
+		}
 	}
 
-	public ChannelGroup getTerminalChannelGroup() {
-		return terminalChannelGroup==null?(terminalChannelGroup=new DefaultChannelGroup(GlobalEventExecutor.INSTANCE)):terminalChannelGroup;
+	/**
+	 * 移除指定Channel对应的DeviceChannelBox
+	 * @param channel
+	 * @return 被移除的DeviceChannelBox
+	 */
+	public DeviceChannelBox removeDeviceChannel(Channel channel){
+		for(DeviceChannelBox dcb:getDeviceChannelList()){
+			if(dcb.getChannel().equals(channel)){
+				getDeviceChannelList().remove(dcb);
+				return dcb;
+			}
+		}
+		return null;
 	}
-
+	
+	/**
+	 * 移除指定Channel对应的TerminalChannelBox
+	 * @param channel
+	 * @return 被移除的TerminalChannelBox
+	 */
+	public TerminalChannelBox removeTerminalChannel(Channel channel){
+		for(TerminalChannelBox tcb:getTerminalChannelList()){
+			if(tcb.getChannel().equals(channel)){
+				getTerminalChannelList().remove(tcb);
+				return tcb;
+			}
+		}
+		return null;
+	}
 }
