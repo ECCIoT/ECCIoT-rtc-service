@@ -8,7 +8,9 @@ import com.alibaba.fastjson.JSONObject;
 
 import team.ecciot.lib.args.builder.CmdBuilder;
 import team.ecciot.lib.args.model.impl.CheckServerIdentityArgs;
+import team.ecciot.service.rtc.comm.listener.DeviceListener;
 import team.ecciot.service.rtc.comm.listener.ServerListener;
+import team.ecciot.service.rtc.comm.listener.TerminalListener;
 
 public class App 
 {
@@ -21,15 +23,18 @@ public class App
         BasicConfigurator.configure();
 
         //产生一个用于测试的服务端身份校验指令
-        CheckServerIdentityArgs csia = new CheckServerIdentityArgs();
-        csia.setApikey("123456789abcdef");
-        csia.setSecretkey("005117");
-        JSONObject json = CmdBuilder.build(csia);
-        System.out.println("产生一个用于测试的服务端身份校验指令:");
-        System.out.println(json.toJSONString());
-        System.out.println();
+//        CheckServerIdentityArgs csia = new CheckServerIdentityArgs();
+//        csia.setApikey("123456789abcdef");
+//        csia.setSecretkey("005117");
+//        JSONObject json = CmdBuilder.build(csia);
+//        System.out.println("产生一个用于测试的服务端身份校验指令:");
+//        System.out.println(json.toJSONString());
+//        System.out.println();
+        //{"action":"Server_CheckServerIdentity","content":{"apikey":"123456789abcdef","secretkey":"005117"}}
         
         new ServerListener(19941).run();
+        new TerminalListener(19942).run();
+        new DeviceListener(19943).run();
         
         LOGGER.info("ECCIoT RTC service has started.");
     }
