@@ -24,14 +24,10 @@ public class ApplicationGroup {
         return api_key;
     }
     
-    public BaseChannelBox getServerChannel() {
+    public BaseChannelBox getServerChannelBox() {
 		return serverChannelBox;
 	}
-    
-    public ServerChannelBox getServerChannelBox() {
-		return serverChannelBox;
-	}
-    
+
     public void setServerChannel(ServerChannelBox channelBox) {
     	synchronized (this) {
     		this.serverChannelBox = channelBox;
@@ -74,6 +70,34 @@ public class ApplicationGroup {
 		for(TerminalChannelBox tcb:getTerminalChannelList()){
 			if(tcb.getChannel().equals(channel)){
 				getTerminalChannelList().remove(tcb);
+				return tcb;
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * 根据itemID获取DeviceChannelBox
+	 * @param itemID
+	 * @return
+	 */
+	public DeviceChannelBox getDeviceChannelBoxByItemID(String itemID){
+		for(DeviceChannelBox dcb:getDeviceChannelList()){
+			if(dcb.getIdentityArgs().getItemID().equals(itemID)){
+				return dcb;
+			}
+		}
+		return null;
+	}
+	
+	/**
+	 * 根据itemID获取DeviceChannelBox
+	 * @param itemID
+	 * @return
+	 */
+	public TerminalChannelBox getTerminalChannelBoxByToken(String token){
+		for(TerminalChannelBox tcb:getTerminalChannelList()){
+			if(tcb.getIdentityArgs().getToken().equals(token)){
 				return tcb;
 			}
 		}
