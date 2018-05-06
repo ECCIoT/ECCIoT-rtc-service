@@ -24,6 +24,9 @@ import team.ecciot.service.rtc.utils.ChannelUtils;
 
 public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 
+	//是否允许未知指令的执行
+	public static boolean isEnableUnknowCmd = false;
+		
 	/*
 	 * 思路：当服务端的通信接入时，首先验证身份，再判断应用管理器中是否已有来自相同应用API的服务通信
 	 */
@@ -42,7 +45,7 @@ public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 		String content = json.getString("content");
 
 		// 判断action是否有效
-		if (ContentParser.checkActionValidity(action)) {
+		if (ContentParser.checkActionValidity(action) || isEnableUnknowCmd) {
 			// 判断当前Channel的身份是否已经验证完成，如果未完成则需要进行身份验证，若完成则解析具体的功能指令
 			boolean b = true;
 			if (b) {
@@ -60,7 +63,6 @@ public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 						// 不接受，终端通信
 						// channel.closeFuture().sync();
 						channel.close();
-
 					}
 
 					@Override
@@ -115,15 +117,42 @@ public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 					// 对于服务端来说不存在消息转发的情况，因此代码执行到这里说明用户SDK版本与服务端不匹配(排除通信安全问题)。
 				}
 			} else {
-				// 设置指令内容配置解析器（通过设置XParseCallbackHandler的接口实现解析消息的过滤）
-				ContentParser parser = new ContentParser(new ServerParseCallbackHandler(channel),
-						ServerParseCallbackHandler.class);
-				// 解析指令
-				if (parser.parse(action, content)) {
-					// 执行到这里表示解析成功
-				} else {
-					// 对于服务端来说不存在消息转发的情况，因此代码执行到这里说明用户SDK版本与服务端不匹配(排除通信安全问题)。
+				/**
+				 * 解析指令，将数据发送给指定的用户
+				 */
+				//将数据转换为JsonObject格式
+				JSONObject jo = JSON.parseObject(msg);
+				//获取定位客户端的必要参数
+				String client = jo.getString("client");
+				String uid = jo.getString("uid");
+				//定义一个用于保存客户端的Channel
+				Channel channelClient;
+				// 从hmChannalApikey中取得信道对应的Apikey
+				String apikey = hmChannalApikey.get(channel);
+				//根据apikey从ApplicationsManager获取ApplicationGroup
+				ApplicationGroup group = ApplicationsManager.getInstance().getApplicationGroupByApikey(apikey);
+				//根据client属性用不同方法获取channelClient
+				if(client.equals("device")){
+					channelClient = group.getDeviceChannelBoxByItemID(uid).getChannel();
+				}else{
+					channelClient = group.getTerminalChannelBoxByToken(uid).getChannel();
 				}
+				//将数据转发给客户端
+				ChannelUtils.sendMessage(channelClient, msg);
+				
+				/**
+				 * (!)暂不使用解析器实现拦截功能         (有部分指令是与RTC通信的，这部分需要被拦截下来，其余的正常转发) + (作为服务器设置的拦截应该是不需要附加区分身份参数的命令)
+				 * (!)实现命令统计的思路：通过解析器获取消息类型，并进行统计，存储记录
+				 */
+//				// 设置指令内容配置解析器（通过设置XParseCallbackHandler的接口实现解析消息的过滤）
+//				ContentParser parser = new ContentParser(new ServerParseCallbackHandler(channel),
+//						ServerParseCallbackHandler.class);
+//				// 解析指令
+//				if (parser.parse(action, content)) {
+//					// 执行到这里表示解析成功
+//				} else {
+//					// 对于服务端来说不存在消息转发的情况，因此代码执行到这里说明用户SDK版本与服务端不匹配(排除通信安全问题)。
+//				}
 			}
 		} else {
 			// 接收到无效的指令
