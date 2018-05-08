@@ -2,6 +2,9 @@ package team.ecciot.service.rtc.comm.handler;
 
 import java.util.HashMap;
 
+import org.apache.log4j.LogManager;
+import org.apache.log4j.Logger;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 
@@ -12,6 +15,7 @@ import team.ecciot.lib.args.builder.CmdBuilder;
 import team.ecciot.lib.args.callback.IRtcCheckIdentityCallback;
 import team.ecciot.lib.args.model.impl.APIKeyInvalidArgs;
 import team.ecciot.lib.args.model.impl.APIKeyVerifiedArgs;
+import team.ecciot.lib.args.model.impl.AskIdentityArgs;
 import team.ecciot.lib.args.model.impl.CheckDeviceIdentityArgs;
 import team.ecciot.lib.args.model.impl.CheckServerIdentityArgs;
 import team.ecciot.lib.args.model.impl.CheckTerminalIdentityArgs;
@@ -32,8 +36,13 @@ public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 	 */
 	// public static final ChannelGroup group = new
 	// DefaultChannelGroup(GlobalEventExecutor.INSTANCE);
-	private static final HashMap<Channel, String> hmChannalApikey = new HashMap<Channel, String>();
+	public static final HashMap<Channel, String> hmChannalApikey = new HashMap<Channel, String>();
 
+	private static Logger LOGGER = LogManager.getLogger(ServerChannelHandler.class);
+	
+	//是否已完成身份验证
+	boolean bCheckIdentityFinished = false;
+	
 	@Override
 	protected void channelRead0(ChannelHandlerContext arg0, String msg) throws Exception {
 		final Channel channel = arg0.channel();
@@ -47,8 +56,8 @@ public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 		// 判断action是否有效
 		if (ContentParser.checkActionValidity(action) || isEnableUnknowCmd) {
 			// 判断当前Channel的身份是否已经验证完成，如果未完成则需要进行身份验证，若完成则解析具体的功能指令
-			boolean b = true;
-			if (b) {
+			
+			if (!bCheckIdentityFinished) {
 				// 进行身份验证
 				// 设置指令内容配置解析器（通过实现匿名接口实现解析消息的过滤）
 				ContentParser parser = new ContentParser(new IRtcCheckIdentityCallback() {
@@ -86,6 +95,9 @@ public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 
 							// 将信道的apikey记录下来
 							hmChannalApikey.put(channel, apikey);
+							
+							// 标记已完成身份验证
+							bCheckIdentityFinished = true;
 
 							// 产生回执消息
 							APIKeyVerifiedArgs akva = new APIKeyVerifiedArgs();
@@ -118,41 +130,38 @@ public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 				}
 			} else {
 				/**
-				 * 解析指令，将数据发送给指定的用户
-				 */
-				//将数据转换为JsonObject格式
-				JSONObject jo = JSON.parseObject(msg);
-				//获取定位客户端的必要参数
-				String client = jo.getString("client");
-				String uid = jo.getString("uid");
-				//定义一个用于保存客户端的Channel
-				Channel channelClient;
-				// 从hmChannalApikey中取得信道对应的Apikey
-				String apikey = hmChannalApikey.get(channel);
-				//根据apikey从ApplicationsManager获取ApplicationGroup
-				ApplicationGroup group = ApplicationsManager.getInstance().getApplicationGroupByApikey(apikey);
-				//根据client属性用不同方法获取channelClient
-				if(client.equals("device")){
-					channelClient = group.getDeviceChannelBoxByItemID(uid).getChannel();
-				}else{
-					channelClient = group.getTerminalChannelBoxByToken(uid).getChannel();
-				}
-				//将数据转发给客户端
-				ChannelUtils.sendMessage(channelClient, msg);
-				
-				/**
-				 * (!)暂不使用解析器实现拦截功能         (有部分指令是与RTC通信的，这部分需要被拦截下来，其余的正常转发) + (作为服务器设置的拦截应该是不需要附加区分身份参数的命令)
+				 * (!)有部分指令是与RTC通信的，这部分需要被拦截下来，其余的正常转发 + (作为服务器设置的拦截应该是不需要附加区分身份参数的命令)
 				 * (!)实现命令统计的思路：通过解析器获取消息类型，并进行统计，存储记录
 				 */
-//				// 设置指令内容配置解析器（通过设置XParseCallbackHandler的接口实现解析消息的过滤）
-//				ContentParser parser = new ContentParser(new ServerParseCallbackHandler(channel),
-//						ServerParseCallbackHandler.class);
-//				// 解析指令
-//				if (parser.parse(action, content)) {
-//					// 执行到这里表示解析成功
-//				} else {
-//					// 对于服务端来说不存在消息转发的情况，因此代码执行到这里说明用户SDK版本与服务端不匹配(排除通信安全问题)。
-//				}
+				// 设置指令内容配置解析器（通过设置XParseCallbackHandler的接口实现解析消息的过滤）
+				ContentParser parser = new ContentParser(new ServerParseCallbackHandler(channel));
+				// 解析指令
+				if (parser.parse(action, content)) {
+					// 由Server发送给RTC的命令已经被执行了完成，这里可以进行简单的统计
+				} else {
+					/**
+					 * 将除了由Server发送给RTC的数据转发送给指定的用户
+					 */
+					//将数据转换为JsonObject格式
+					JSONObject jo = JSON.parseObject(msg);
+					//获取定位客户端的必要参数
+					String client = jo.getString("client");
+					String uid = jo.getString("uid");
+					//定义一个用于保存客户端的Channel
+					Channel channelClient;
+					// 从hmChannalApikey中取得信道对应的Apikey
+					String apikey = hmChannalApikey.get(channel);
+					//根据apikey从ApplicationsManager获取ApplicationGroup
+					ApplicationGroup group = ApplicationsManager.getInstance().getApplicationGroupByApikey(apikey);
+					//根据client属性用不同方法获取channelClient
+					if(client.equals("device")){
+						channelClient = group.getDeviceChannelBoxByItemID(uid).getChannel();
+					}else{
+						channelClient = group.getTerminalChannelBoxByToken(uid).getChannel();
+					}
+					//将数据转发给客户端
+					ChannelUtils.sendMessage(channelClient, msg);
+				}
 			}
 		} else {
 			// 接收到无效的指令
@@ -163,22 +172,20 @@ public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 	// 当新连接接入
 	@Override
 	public void handlerAdded(ChannelHandlerContext ctx) throws Exception {
-//		Channel channel = ctx.channel();
-		// if (!group.contains(channel)) {
-		// group.add(channel);
-		// }
 	}
 
 	// 当连接断开
 	@Override
 	public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
-		
 	}
 
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
-		// Channel channel = ctx.channel();
-		// System.out.println("[" + channel.remoteAddress() + "] " + "online");
+		//产生一个身份询问的参数对象
+		AskIdentityArgs aia = new AskIdentityArgs();
+		aia.setMessage("Welcome!");
+		JSONObject json = CmdBuilder.build(aia);
+		ChannelUtils.sendMessage(ctx.channel(),json.toJSONString());
 	}
 
 	@Override
@@ -186,11 +193,10 @@ public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 		Channel channel = ctx.channel();
 		String apikey = null;
 		// 从hmChannalApikey中取得信道对应的Apikey
-		
 		if(!hmChannalApikey.containsKey(channel)){
 			return;
 		}
-		
+		apikey = hmChannalApikey.get(channel);
 		// 从ApplicationsManager中移除对象
 		ApplicationsManager.getInstance().getApplicationGroupByApikey(apikey).setServerChannel(null);
 	}
@@ -200,11 +206,10 @@ public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 		Channel channel = ctx.channel();
 		String apikey = null;
 		// 从hmChannalApikey中取得信道对应的Apikey
-		
 		if(!hmChannalApikey.containsKey(channel)){
 			return;
 		}
-		
+		apikey = hmChannalApikey.get(channel);
 		// 从ApplicationsManager中移除对象
 		ApplicationsManager.getInstance().getApplicationGroupByApikey(apikey).setServerChannel(null);
 		ctx.close().sync();

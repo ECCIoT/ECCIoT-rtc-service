@@ -17,7 +17,6 @@ import team.ecciot.lib.args.model.impl.CheckServerIdentityArgs;
 import team.ecciot.lib.args.model.impl.CheckTerminalIdentityArgs;
 import team.ecciot.lib.args.parser.ContentParser;
 import team.ecciot.service.rtc.comm.channel.TerminalChannelBox;
-import team.ecciot.service.rtc.comm.handler.callback.ServerParseCallbackHandler;
 import team.ecciot.service.rtc.manager.ApplicationGroup;
 import team.ecciot.service.rtc.manager.ApplicationsManager;
 import team.ecciot.service.rtc.utils.ChannelUtils;
@@ -27,8 +26,11 @@ public class TerminalChannelHandler extends SimpleChannelInboundHandler<String> 
 	//是否允许未知指令的执行
 	public static boolean isEnableUnknowCmd = false;
 	
-	private static final HashMap<Channel, String> hmChannalApikey = new HashMap<Channel, String>();
+	public static final HashMap<Channel, String> hmChannalApikey = new HashMap<Channel, String>();
 
+	//是否已完成身份验证
+	boolean bCheckIdentityFinished = false;
+		
 	@Override
 	protected void channelRead0(ChannelHandlerContext arg0, String msg) throws Exception {
 		final Channel channel = arg0.channel();
@@ -42,8 +44,7 @@ public class TerminalChannelHandler extends SimpleChannelInboundHandler<String> 
 		// 判断action是否有效
 		if (ContentParser.checkActionValidity(action) || isEnableUnknowCmd) {
 			// 判断当前Channel的身份是否已经验证完成，如果未完成则需要进行身份验证，若完成则解析具体的功能指令
-			boolean b = true;
-			if (b) {
+			if (!bCheckIdentityFinished) {
 				// 进行身份验证
 				// 设置指令内容配置解析器（通过实现匿名接口实现解析消息的过滤）
 				ContentParser parser = new ContentParser(new IRtcCheckIdentityCallback() {
@@ -74,6 +75,9 @@ public class TerminalChannelHandler extends SimpleChannelInboundHandler<String> 
 							// 将信道的apikey记录下来
 							hmChannalApikey.put(channel, apikey);
 
+							// 标记已完成身份验证
+							bCheckIdentityFinished = true;
+							
 							// 产生回执消息
 							APIKeyVerifiedArgs akva = new APIKeyVerifiedArgs();
 							JSONObject json = CmdBuilder.build(akva);
@@ -173,7 +177,7 @@ public class TerminalChannelHandler extends SimpleChannelInboundHandler<String> 
 		if (!hmChannalApikey.containsKey(channel)) {
 			return;
 		}
-
+		apikey = hmChannalApikey.get(channel);
 		// 从ApplicationsManager中移除对象
 		ApplicationsManager.getInstance().getApplicationGroupByApikey(apikey).removeTerminalChannel(channel);
 	}
@@ -187,7 +191,7 @@ public class TerminalChannelHandler extends SimpleChannelInboundHandler<String> 
 		if (!hmChannalApikey.containsKey(channel)) {
 			return;
 		}
-
+		apikey = hmChannalApikey.get(channel);
 		// 从ApplicationsManager中移除对象
 		ApplicationsManager.getInstance().getApplicationGroupByApikey(apikey).removeTerminalChannel(channel);
 		ctx.close().sync();
