@@ -29,7 +29,7 @@ import team.ecciot.service.rtc.utils.ChannelUtils;
 public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 
 	//是否允许未知指令的执行
-	public static boolean isEnableUnknowCmd = false;
+	public static boolean isEnableForwardUnknowCmd = false;
 		
 	/*
 	 * 思路：当服务端的通信接入时，首先验证身份，再判断应用管理器中是否已有来自相同应用API的服务通信
@@ -54,7 +54,7 @@ public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 		String content = json.getString("content");
 
 		// 判断action是否有效
-		if (ContentParser.checkActionValidity(action) || isEnableUnknowCmd) {
+		if (ContentParser.checkActionValidity(action) || isEnableForwardUnknowCmd) {
 			// 判断当前Channel的身份是否已经验证完成，如果未完成则需要进行身份验证，若完成则解析具体的功能指令
 			
 			if (!bCheckIdentityFinished) {
@@ -83,9 +83,17 @@ public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 						boolean b = true;
 						if (b) {
 							// 验证成功
-
+							
+							//定义一个应用组对象
+							ApplicationGroup group = null;
+							// 判断是否已有相同apikey的应用组存在
+							group = ApplicationsManager.getInstance().getApplicationGroupByApikey(apikey);
+							if(group!=null){
+								
+								return;
+							}
 							// 创建一个ApplicationGroup
-							ApplicationGroup group = new ApplicationGroup(apikey);
+							group = new ApplicationGroup(apikey);
 							// 创建ServerChannelBox
 							ServerChannelBox scb = new ServerChannelBox(channel, args);
 							// 将ServerChannelBox加入ApplicationGroup
@@ -156,8 +164,10 @@ public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 					//根据client属性用不同方法获取channelClient
 					if(client.equals("device")){
 						channelClient = group.getDeviceChannelBoxByItemID(uid).getChannel();
-					}else{
+					}else if(client.equals("terminal")){
 						channelClient = group.getTerminalChannelBoxByToken(uid).getChannel();
+					}else{
+						return;
 					}
 					//将数据转发给客户端
 					ChannelUtils.sendMessage(channelClient, msg);
@@ -177,6 +187,7 @@ public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 	// 当连接断开
 	@Override
 	public void handlerRemoved(ChannelHandlerContext ctx) throws Exception {
+		
 	}
 
 	@Override

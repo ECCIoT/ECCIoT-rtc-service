@@ -37,7 +37,7 @@ public class ServerParseCallbackHandler extends BaseParseCallbackHandler impleme
 
 	@Override
 	public void InvalidActionInstruction(String action, String content) {
-		LOGGER.info(String.format("未知的Action：%s，内容为：%s。", action, content));
+//		LOGGER.info(String.format("未知的Action：%s，内容为：%s。", action, content));
 	}
 
 	@Override
@@ -50,6 +50,8 @@ public class ServerParseCallbackHandler extends BaseParseCallbackHandler impleme
 		ApplicationGroup group = ApplicationsManager.getInstance().getApplicationGroupByApikey(apikey);
 		// 通过唯一识别码从ApplicationGroup获取DeviceChannelBox
 		DeviceChannelBox dcb = group.getDeviceChannelBoxByItemID(id);
+		// 判断有效性
+		if(dcb==null)return;
 		// 删除设备存在的记录
 		if (DeviceChannelHandler.hmChannalApikey.containsKey(dcb.getChannel())) {
 			DeviceChannelHandler.hmChannalApikey.remove(dcb.getChannel());
