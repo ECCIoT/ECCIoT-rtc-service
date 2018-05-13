@@ -1,0 +1,19 @@
+产生用于测试的指令:
+=======================================================================
+服务端身份校验指令:
+{"action":"Server_CheckServerIdentity","content":{"apikey":"123456789abcdef","secretkey":"005117"}}
+=======================================================================
+移动端身份校验指令:
+{"action":"Terminal_CheckTerminalIdentity","content":{"apikey":"123456789abcdef","platform":"Android 7.0","token":"a1b2c3d4","version":"SmartHome v1.1.2"}}
+=======================================================================
+设备端身份校验指令:
+{"action":"Device_CheckDeviceIdentity","content":{"apikey":"123456789abcdef","itemID":"device_001","model":"SWITCH","version":"TyphaX v1.0.0"}}
+=======================================================================
+关闭设备通信的指令:
+{"action":"Server_CloseDevice","content":{"itemID":"device_001","state":false}}
+=======================================================================
+查询指定apikey下所有在线设备指令:
+{"action":"Server_QueryOnlineDevices","content":{"apikey":"123456789abcdef"}}
+=======================================================================
+向指定设备发送控制指令:
+{"uid":"device_001","action":"Terminal_ControlItem","client":"device","content":{"atCmd":"AT+TEST=1,2,3,4","itemID":"device_001"}}
