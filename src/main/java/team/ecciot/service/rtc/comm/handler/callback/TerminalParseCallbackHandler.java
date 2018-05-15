@@ -11,6 +11,6 @@ public class TerminalParseCallbackHandler extends BaseParseCallbackHandler imple
 
 	@Override
 	public void InvalidActionInstruction(String action, String content) {
-		System.out.println(String.format("未知的Action：%s，内容为：%s。", action, content));
+//		System.out.println(String.format("未知的Action：%s，内容为：%s。", action, content));
 	}
 }
