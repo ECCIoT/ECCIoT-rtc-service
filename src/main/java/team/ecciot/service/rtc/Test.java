@@ -68,5 +68,8 @@ public class Test {
       	JSONObject json6 = CmdBuilder.build(cia,"device",DEVICE_ITEMID);
       	System.out.println("向指定设备发送控制指令:");
       	System.out.println(json6.toJSONString());
+      	
+      	System.out.println("=======================================================================");
+      	System.out.println(CmdBuilder.castArgs2AT(cdia));
 	}
 }
