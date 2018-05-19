@@ -43,6 +43,13 @@ public class DeviceChannelHandler extends SimpleChannelInboundHandler<String> {
 	protected void channelRead0(ChannelHandlerContext arg0, String msg) throws Exception {
 		final Channel channel = arg0.channel();
 
+		LOGGER.info("[接收设备消息] ← msg:" + msg);
+		
+		// 去除AT指令反馈的前标
+		if(msg.startsWith("+")){
+			msg = msg.substring(msg.indexOf(':')+1);
+		}
+		
 		// 将读取的指令转换为json格式
 		JSONObject json = JSON.parseObject(msg);
 		// 读取指令中的Action和Content
@@ -112,9 +119,9 @@ public class DeviceChannelHandler extends SimpleChannelInboundHandler<String> {
 
 							// 产生回执消息
 							APIKeyVerifiedArgs akva = new APIKeyVerifiedArgs();
-							JSONObject json = CmdBuilder.build(akva);
+//							JSONObject json = CmdBuilder.build(akva);
 							// 消息回执
-							ChannelUtils.sendMessage(channel, json.toJSONString());
+							ChannelUtils.sendMessage(channel, CmdBuilder.castArgs2AT(akva));
 
 							/*----------将设备登录信息发送给服务端----------*/
 							// 产生通知服务端新设备接入的消息
@@ -134,9 +141,9 @@ public class DeviceChannelHandler extends SimpleChannelInboundHandler<String> {
 							// 产生回执消息
 							APIKeyInvalidArgs akia = new APIKeyInvalidArgs();
 							akia.setMessage("验证未通过.");
-							JSONObject json = CmdBuilder.build(akia);
+//							JSONObject json = CmdBuilder.build(akia);
 							// 消息回执
-							ChannelUtils.sendMessage(channel, json.toJSONString());
+							ChannelUtils.sendMessage(channel, CmdBuilder.castArgs2AT(akia));
 						}
 					}
 				}, IRtcCheckIdentityCallback.class);
@@ -195,9 +202,10 @@ public class DeviceChannelHandler extends SimpleChannelInboundHandler<String> {
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
 		// 产生一个身份询问的参数对象
 		AskIdentityArgs aia = new AskIdentityArgs();
-		aia.setMessage("Welcome!");
-		JSONObject json = CmdBuilder.build(aia);
-		ChannelUtils.sendMessage(ctx.channel(), json.toJSONString());
+		aia.setMessage("device");
+//		JSONObject json = CmdBuilder.build(aia);
+		String at = CmdBuilder.castArgs2AT(aia);
+		ChannelUtils.sendMessage(ctx.channel(), at);
 	}
 
 	@Override
@@ -218,7 +226,7 @@ public class DeviceChannelHandler extends SimpleChannelInboundHandler<String> {
 		// 产生通知服务端新设备接入的消息
 		DeviceStateChangedArgs dsca = new DeviceStateChangedArgs();
 		dsca.setItemID(dc.getIdentityArgs().getItemID());
-		dsca.setState(true);
+		dsca.setState(false);
 		dsca.setDeviceInfo(dc.getIdentityArgs());
 		JSONObject json2 = CmdBuilder.build(dsca);
 		// 获取服务端的Channel
