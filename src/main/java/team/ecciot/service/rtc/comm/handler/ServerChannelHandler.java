@@ -47,6 +47,8 @@ public class ServerChannelHandler extends SimpleChannelInboundHandler<String> {
 	protected void channelRead0(ChannelHandlerContext arg0, String msg) throws Exception {
 		final Channel channel = arg0.channel();
 
+		LOGGER.info("[接收服务消息] ← msg:" + msg);
+		
 		// 将读取的指令转换为json格式
 		JSONObject json = JSON.parseObject(msg);
 		// 读取指令中的Action和Content
